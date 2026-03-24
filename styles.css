@@ -65,13 +65,12 @@ p {
   object-fit: cover;
   border-radius: 20px;
   border: 1px solid #2a2a2a;
-  transform: translateX(180px);
+  transform: translateX(180px) translateY(60px);
   transition: 0.3s;
-
 }
 
 .profile-img:hover {
-  transform: translateX(180px) scale(1.03);
+  transform: translateX(180px) translateY(60px) scale(1.03);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
 }
 
