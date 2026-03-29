@@ -13,7 +13,9 @@ body {
   padding: 40px 20px;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   margin: 0 0 10px 0;
 }
 
@@ -88,9 +90,12 @@ p {
 }
 
 .card {
+  display: block;
   background: #1a1a1a;
   padding: 20px;
   border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
   transition: 0.2s;
 }
 
@@ -191,4 +196,17 @@ footer {
     text-align: center;
   }
 
+  /* ========= LINKS ========= */
+  a {
+    color: #4da3ff;
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: #80c1ff;
+  }
+
+  a:visited {
+    color: #a78bfa;
+  }
 }
