@@ -84,6 +84,7 @@ p {
 }
 
 .competition-card {
+  position: relative;
   margin-top: 24px;
   padding: 28px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -91,7 +92,7 @@ p {
   background: linear-gradient
   (
     135deg,
-    rgba(255, 255, 255, 0.12)
+    rgba(255, 255, 255, 0.12),
     rgba(255, 255, 255, 0.04)
   );
   transition: transform 0.2s ease, border-color 0.2s ease;
@@ -116,6 +117,7 @@ p {
     height: 100%;
     z-index: 1;
     pointer-events: none;
+    border-radius: 16px;
 }
 
 .competition-badge {
