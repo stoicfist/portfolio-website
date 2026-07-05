@@ -65,8 +65,7 @@ For now, I'm prioritizing new features and content over restructuring the projec
       <p>Software Developer from Switzerland 🇨🇭</p>
     </td>
     <td>
-      <p>🟦 <a href="https://github.com/YOUR-USERNAME">GitHub</a></p>
-      <p>🟢 <a href="https://linkedin.com/in/YOUR-LINKEDIN">LinkedIn</a></p>
+      <p>🟢 <a href="https://www.linkedin.com/in/ngoc-son-peter-ngo/">LinkedIn</a></p>
     </td>
   </tr>
 </table>
