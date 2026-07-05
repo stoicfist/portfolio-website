@@ -89,8 +89,7 @@ p {
   padding: 28px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
-  background: linear-gradient
-  (
+  background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.12),
     rgba(255, 255, 255, 0.04)
