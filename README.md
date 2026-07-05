@@ -1,6 +1,6 @@
 # Portfolio Website
 
-Personal portfolio website built with HTML/CSS and deployed using AWS.
+Hello, this is my Personal portfolio website built with HTML/CSS and deployed using AWS.
 
 ## Tech
 - HTML, CSS (Grid)
