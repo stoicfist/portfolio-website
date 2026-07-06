@@ -25,7 +25,7 @@ if (card && canvas) {
         window.innerWidth < 768 ||
         /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
-    const MAX_ROCKETS = IS_MOBILE ? 1 : 2;
+    const MAX_ROCKETS = 1;
 
     // Physics Constants
     const GRAVITY_ROCKET = 0.038;
@@ -35,19 +35,19 @@ if (card && canvas) {
     // Quality Settings
     const TRAIL_LENGTH = IS_MOBILE ? 8 : 20;
     const SMOKE_DECAY = IS_MOBILE ? 0.01 : 0.0018;
-    const MAX_SMOKE = IS_MOBILE ? 0 : 70;
+    const MAX_SMOKE = IS_MOBILE ? 0 : 35;
 
     const ROCKET_INTERVAL_MIN = IS_MOBILE ? 1600 : 1000;
     const ROCKET_INTERVAL_MAX = IS_MOBILE ? 2300 : 1600;
 
-    const PARTICLE_COUNT_MIN = IS_MOBILE ? 28 : 65;
-    const PARTICLE_COUNT_MAX = IS_MOBILE ? 45 : 105;
+    const PARTICLE_COUNT_MIN = IS_MOBILE ? 28 : 42;
+    const PARTICLE_COUNT_MAX = IS_MOBILE ? 45 : 68;
 
     function resizeCanvas() {
         const width = card.offsetWidth;
         const height = card.offsetHeight;
 
-        const dpr = IS_MOBILE ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+        const dpr = 1;
 
         canvas.width = width * dpr;
         canvas.height = height * dpr;
@@ -574,7 +574,7 @@ if (card && canvas) {
             ctx.globalAlpha = alpha;
 
             if (!IS_MOBILE) {
-                ctx.shadowBlur = p.heavy ? 13 : 10;
+                ctx.shadowBlur = p.heavy ? 8 : 6;
                 ctx.shadowColor = p.color;
             } else {
                 ctx.shadowBlur = 0;
