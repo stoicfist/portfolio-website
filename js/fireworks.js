@@ -14,21 +14,45 @@ if (card && canvas) {
     let fireworkInterval = null;
     let animating = false;
 
+    let activeRocketCycles = 0;
+
     const celebrationEndDate = new Date("2026-12-31");
 
-    // Physic Constants
+    const IS_MOBILE =
+        window.innerWidth < 768 ||
+        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    const MAX_ROCKETS = IS_MOBILE ? 1 : 2;
+
+    // Physics Constants
     const GRAVITY_ROCKET = 0.038;
     const GRAVITY_PARTICLE = 0.035;
     const DRAG = 0.986;
 
-    const TRAIL_LENGTH = 20;
+    // Quality Settings
+    const TRAIL_LENGTH = IS_MOBILE ? 8 : 20;
+    const SMOKE_DECAY = IS_MOBILE ? 0.01 : 0.0018;
+    const MAX_SMOKE = IS_MOBILE ? 0 : 70;
 
-    const SMOKE_DECAY = 0.0018;
-    const MAX_SMOKE = 70;
+    const ROCKET_INTERVAL_MIN = IS_MOBILE ? 1600 : 1000;
+    const ROCKET_INTERVAL_MAX = IS_MOBILE ? 2300 : 1600;
+
+    const PARTICLE_COUNT_MIN = IS_MOBILE ? 28 : 65;
+    const PARTICLE_COUNT_MAX = IS_MOBILE ? 45 : 105;
 
     function resizeCanvas() {
-        canvas.width = card.offsetWidth;
-        canvas.height = card.offsetHeight;
+        const width = card.offsetWidth;
+        const height = card.offsetHeight;
+
+        const dpr = IS_MOBILE ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     function random(min, max) {
@@ -47,36 +71,47 @@ if (card && canvas) {
         }
     }
 
-    function createRocket() {
-        const startX = random(50, canvas.width - 50);
-        const startY = canvas.height + 12;
+    function tryCreateRocket() {
+        if (!hoverActive) return;
+        if (new Date() > celebrationEndDate) return;
+        if (activeRocketCycles >= MAX_ROCKETS) return;
 
-        const type = Math.floor(random(0, 4)); // 0 straight, 1 arc, 2 spiral, 3 random angle
+        createRocket();
+    }
+
+    function createRocket() {
+        activeRocketCycles++;
+
+        const startX = random(50, card.offsetWidth - 50);
+        const startY = card.offsetHeight + 12;
+
+        const type = Math.floor(random(0, 4));
         let targetX = startX;
-        let targetY = random(canvas.height * 0.15, canvas.height * 0.5);
+        const targetY = random(card.offsetHeight * 0.15, card.offsetHeight * 0.5);
 
         switch (type) {
-            case 0: // Straight up
-            targetX = startX + random(-15, 15);
-            break;
+            case 0:
+                targetX = startX + random(-15, 15);
+                break;
 
-        case 1: // Side arc / parabola
-            targetX = random(canvas.width * 0.2, canvas.width * 0.85);
-            break;
+            case 1:
+                targetX = random(card.offsetWidth * 0.2, card.offsetWidth * 0.85);
+                break;
 
-        case 2: // Spiral
-            targetX = startX;
-            break;
+            case 2:
+                targetX = startX;
+                break;
 
-        case 3: // Random angle
-            targetX = startX + random(-canvas.width * 0.25, canvas.width * 0.25);
-            break;
+            case 3:
+                targetX = startX + random(-card.offsetWidth * 0.25, card.offsetWidth * 0.25);
+                break;
 
-        default: // Random Angle
-            targetX = startX + random(-canvas.width * 0.3, canvas.width * 0.3);
-            break;
+            default:
+                targetX = startX + random(-card.offsetWidth * 0.3, card.offsetWidth * 0.3);
+                break;
         }
-        targetX = Math.max(30, Math.min(canvas.width - 30, targetX));
+
+        targetX = Math.max(30, Math.min(card.offsetWidth - 30, targetX));
 
         const dy = startY - targetY;
         const vy0 = -Math.sqrt(2 * GRAVITY_ROCKET * dy);
@@ -96,13 +131,19 @@ if (card && canvas) {
             color: randomColor(),
             spiralAmp: random(10, 18),
             spiralFreq: random(0.16, 0.23),
-            trail: []
+            trail: [],
+            slotReleased: false
         });
 
         ensureAnimating();
     }
 
+    function releaseRocketSlot() {
+        activeRocketCycles = Math.max(0, activeRocketCycles - 1);
+    }
+
     function spawnSmoke(x, y, size, life = 1) {
+        if (IS_MOBILE) return;
         if (smoke.length > MAX_SMOKE) smoke.shift();
 
         const blobs = [];
@@ -133,15 +174,15 @@ if (card && canvas) {
             x,
             y,
             life: 1,
-            radius: random(90, 150),
+            radius: IS_MOBILE ? random(55, 85) : random(90, 150),
             color
         });
 
-        const count = Math.floor(random(65, 105));
+        const count = Math.floor(random(PARTICLE_COUNT_MIN, PARTICLE_COUNT_MAX));
 
         for (let i = 0; i < count; i++) {
             const angle = random(0, Math.PI * 2);
-            const speed = Math.sqrt(Math.random()) * random(1.0, 3.0);
+            const speed = Math.sqrt(Math.random()) * random(1.0, IS_MOBILE ? 2.2 : 3.0);
 
             particles.push({
                 x,
@@ -149,20 +190,22 @@ if (card && canvas) {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 life: 1,
-                decay: random(0.003, 0.007),
+                decay: random(IS_MOBILE ? 0.01 : 0.003, IS_MOBILE ? 0.016 : 0.007),
                 color,
-                size: random(1, 2.3),
+                size: random(1, IS_MOBILE ? 1.6 : 2.3),
                 flickerPhase: random(0, Math.PI * 2)
             });
         }
 
-        for (let i = 0; i < Math.floor(random(7, 12)); i++) {
-            spawnSmoke(
-                x + random(-12, 12),
-                y + random(-12, 12),
-                random(10, 22),
-                random(0.65, 1)
-            );
+        if (!IS_MOBILE) {
+            for (let i = 0; i < Math.floor(random(7, 12)); i++) {
+                spawnSmoke(
+                    x + random(-12, 12),
+                    y + random(-12, 12),
+                    random(10, 22),
+                    random(0.65, 1)
+                );
+            }
         }
     }
 
@@ -189,22 +232,29 @@ if (card && canvas) {
             ctx.globalAlpha = t * 0.55;
             ctx.strokeStyle = rocket.color;
             ctx.lineWidth = 0.4 + t * 1.4;
-            ctx.shadowBlur = 7 * t;
-            ctx.shadowColor = rocket.color;
+
+            if (!IS_MOBILE) {
+                ctx.shadowBlur = 7 * t;
+                ctx.shadowColor = rocket.color;
+            }
+
             ctx.stroke();
         }
 
         ctx.beginPath();
-        ctx.arc(rocket.x, rocket.y, 2.2, 0, Math.PI * 2);
+        ctx.arc(rocket.x, rocket.y, IS_MOBILE ? 1.7 : 2.2, 0, Math.PI * 2);
         ctx.globalAlpha = 0.9;
         ctx.fillStyle = "#ffffff";
-        ctx.shadowBlur = 16;
-        ctx.shadowColor = rocket.color;
-        ctx.fill();
 
+        if (!IS_MOBILE) {
+            ctx.shadowBlur = 16;
+            ctx.shadowColor = rocket.color;
+        }
+
+        ctx.fill();
         ctx.restore();
 
-        if (Math.random() < 0.08) {
+        if (!IS_MOBILE && Math.random() < 0.08) {
             spawnSmoke(rocket.x, rocket.y, random(4, 7), random(0.35, 0.55));
         }
     }
@@ -214,7 +264,6 @@ if (card && canvas) {
             rocket.t += 0.9;
 
             const tau = rocket.t;
-
             let x = rocket.startX + rocket.vx0 * tau;
 
             if (rocket.type === 2) {
@@ -233,6 +282,15 @@ if (card && canvas) {
 
             if (rocket.t >= rocket.timeToApex) {
                 explode(rocket.x, rocket.y, rocket.color);
+
+                if (!rocket.slotReleased) {
+                    rocket.slotReleased = true;
+
+                    setTimeout(() => {
+                        releaseRocketSlot();
+                    }, IS_MOBILE ? 750 : 950);
+                }
+
                 return false;
             }
 
@@ -242,7 +300,7 @@ if (card && canvas) {
 
     function updateFlashes() {
         flashes = flashes.filter((flash) => {
-            flash.life -= 0.045;
+            flash.life -= IS_MOBILE ? 0.08 : 0.045;
             return flash.life > 0;
         });
     }
@@ -264,6 +322,11 @@ if (card && canvas) {
     }
 
     function updateSmoke() {
+        if (IS_MOBILE) {
+            smoke = [];
+            return;
+        }
+
         smoke = smoke.filter((s) => {
             s.vx += random(-0.01, 0.01);
             s.vy += random(-0.008, 0.008);
@@ -302,7 +365,6 @@ if (card && canvas) {
             });
 
             ctx.restore();
-
             return true;
         });
     }
@@ -314,7 +376,15 @@ if (card && canvas) {
         flashes.forEach((flash) => {
             const radius = flash.radius * (1 - flash.life * 0.2);
 
-            const grad = ctx.createRadialGradient(flash.x, flash.y, 0, flash.x, flash.y, radius);
+            const grad = ctx.createRadialGradient(
+                flash.x,
+                flash.y,
+                0,
+                flash.x,
+                flash.y,
+                radius
+            );
+
             grad.addColorStop(0, `rgba(255,255,255,${flash.life * 0.8})`);
             grad.addColorStop(0.25, `rgba(255,215,120,${flash.life * 0.25})`);
             grad.addColorStop(1, "rgba(255,255,255,0)");
@@ -351,8 +421,14 @@ if (card && canvas) {
             ctx.fill();
 
             ctx.globalAlpha = alpha;
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = p.color;
+
+            if (!IS_MOBILE) {
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = p.color;
+            } else {
+                ctx.shadowBlur = 0;
+            }
+
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
             ctx.fillStyle = p.color;
@@ -366,11 +442,10 @@ if (card && canvas) {
     }
 
     function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, card.offsetWidth, card.offsetHeight);
 
         updateRockets();
         updateFlashes();
-
         updateSmoke();
         drawFlashes();
         updateParticles();
@@ -393,14 +468,12 @@ if (card && canvas) {
         hoverTimeout = setTimeout(() => {
             if (!hoverActive) return;
 
-            createRocket();
+            tryCreateRocket();
 
             fireworkInterval = setInterval(() => {
-                if (hoverActive) {
-                    createRocket();
-                }
-            }, random(1500, 2300));
-        }, 1200);
+                tryCreateRocket();
+            }, random(ROCKET_INTERVAL_MIN, ROCKET_INTERVAL_MAX));
+        }, IS_MOBILE ? 500 : 1200);
     }
 
     function stopCelebration() {
@@ -411,6 +484,8 @@ if (card && canvas) {
 
         hoverTimeout = null;
         fireworkInterval = null;
+
+        activeRocketCycles = Math.min(activeRocketCycles, MAX_ROCKETS);
     }
 
     resizeCanvas();
@@ -418,4 +493,24 @@ if (card && canvas) {
 
     card.addEventListener("mouseenter", startCelebration);
     card.addEventListener("mouseleave", stopCelebration);
+
+    card.addEventListener("click", () => {
+        if (IS_MOBILE) {
+            if (hoverActive) {
+                stopCelebration();
+            } else {
+                startCelebration();
+            }
+        }
+    });
+
+    card.addEventListener(
+        "touchstart",
+        () => {
+            if (IS_MOBILE && !hoverActive) {
+                startCelebration();
+            }
+        },
+        { passive: true }
+    );
 }
