@@ -63,7 +63,12 @@ if (card && canvas) {
     }
 
     function randomColor() {
-        const colors = ["#ffd700", "#ff9f1c", "#ffffff", "#4dabf7", "#b197fc", "#ff6b6b"];
+        const colors =
+        [
+            "#ffd700","#ffcc33",
+            "#fff4c2", "#ffffff",
+            "#d9e2ec", "#bfc7d5"
+        ];
         return colors[Math.floor(random(0, colors.length))];
     }
 
@@ -136,8 +141,20 @@ if (card && canvas) {
             spiralAmp: random(10, 18),
             spiralFreq: random(0.16, 0.23),
             trail: [],
-            slotReleased: false
+            slotReleased: false,
+
+            // Tail jitter, rocket with small unstable flame movement
+            trailJitter: random(IS_MOBILE ? 0.35 : 0.65, IS_MOBILE ? 0.75 : 1.25),
+            trailNoisePhase: random(0, Math.PI * 2)
         });
+
+        // Launch smoke, small ignition puff at the start (desktop only)
+        if (!IS_MOBILE) {
+            spawnSmoke(startX, startY - 8, random(5, 8), 0.35);
+        }
+
+        // Ignition sparks, small start sparks
+        spawnIgnitionSparks(startX, startY - 4, randomColor());
 
         ensureAnimating();
     }
@@ -173,6 +190,35 @@ if (card && canvas) {
         });
     }
 
+    function spawnIgnitionSparks(x, y, color) {
+        const ignitionCount = IS_MOBILE ? 4 : 8;
+
+        for (let i = 0; i < ignitionCount; i++) {
+            const angle = random(Math.PI * 0.15, Math.PI * 0.85);
+            const speed = random(0.7, IS_MOBILE ? 1.25 : 1.65);
+
+            particles.push({
+                x,
+                y,
+                prevX: x,
+                prevY: y,
+                vx: Math.cos(angle) * speed * random(0.7, 1.2),
+                vy: Math.sin(angle) * speed * random(0.6, 1.05),
+                life: random(0.35, 0.55),
+                delay: 0,
+                decay: random(IS_MOBILE ? 0.035 : 0.026, IS_MOBILE ? 0.055 : 0.042),
+                gravity: random(0.045, 0.075),
+                wind: random(-0.006, 0.006),
+                color,
+                size: random(0.8, IS_MOBILE ? 1.15 : 1.35),
+                flickerPhase: random(0, Math.PI * 2),
+                sparkLength: random(0.7, IS_MOBILE ? 1.1 : 1.35),
+                heavy: false,
+                ignition: true
+            });
+        }
+    }
+
     function explode(x, y, color) {
         flashes.push({
             x,
@@ -184,20 +230,74 @@ if (card && canvas) {
 
         const count = Math.floor(random(PARTICLE_COUNT_MIN, PARTICLE_COUNT_MAX));
 
+        // Burst types: 0 = normal, 1 = bouquet, 2 = chrysanthemum.
+        const burstType = Math.floor(random(0, 3));
+
+        // Wind: very small horizontal drift for natural movement.
+        const burstWind = random(-0.012, 0.012);
+
         for (let i = 0; i < count; i++) {
             const angle = random(0, Math.PI * 2);
-            const speed = Math.sqrt(Math.random()) * random(1.0, IS_MOBILE ? 2.2 : 3.0);
+
+            // Less spherical shape, more natural firework :)
+            let speed = random(1.35, IS_MOBILE ? 2.45 : 3.25);
+
+            // More natural explosion
+            let stretchX = random(0.75, 1.25);
+            let stretchY = random(0.85, 1.15);
+
+            // Burst type variations
+            if (burstType === 1) {
+                // Bouquet, slightly slower and falls more beautifully
+                speed *= random(0.82, 1.02);
+                stretchY *= random(0.95, 1.25);
+            } else if (burstType === 2) {
+                // Chrysanthemum, cleaner outward burst
+                speed *= random(1.0, 1.18);
+                stretchX *= random(0.9, 1.1);
+                stretchY *= random(0.9, 1.1);
+            }
+
+            // Bouquet effect
+            const isFallingSpark = Math.sin(angle) > 0;
+            const downwardLifeFactor = isFallingSpark ? random(0.82, 0.94) : random(1.0, 1.08);
+
+            // Heavy sparks
+            const isHeavySpark = Math.random() < (IS_MOBILE ? 0.1 : 0.15);
+
+            // Particle delay
+            const delay = random(0, IS_MOBILE ? 2.5 : 5.5);
+
+            const baseDecay =
+                random(IS_MOBILE ? 0.01 : 0.0035, IS_MOBILE ? 0.016 : 0.0068) *
+                downwardLifeFactor *
+                (isHeavySpark ? 0.76 : 1);
 
             particles.push({
                 x,
                 y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
+                prevX: x,
+                prevY: y,
+                vx: Math.cos(angle) * speed * stretchX,
+                vy: Math.sin(angle) * speed * stretchY,
                 life: 1,
-                decay: random(IS_MOBILE ? 0.01 : 0.003, IS_MOBILE ? 0.016 : 0.007),
+                delay,
+                decay: baseDecay,
+                gravity: random(
+                    IS_MOBILE ? 0.038 : burstType === 1 ? 0.046 : 0.038,
+                    IS_MOBILE ? 0.058 : burstType === 1 ? 0.078 : 0.068
+                ),
+                wind: burstWind * random(0.6, 1.4),
                 color,
-                size: random(1, IS_MOBILE ? 1.6 : 2.3),
-                flickerPhase: random(0, Math.PI * 2)
+                size: isHeavySpark
+                    ? random(IS_MOBILE ? 1.35 : 1.6, IS_MOBILE ? 1.9 : 2.6)
+                    : random(1, IS_MOBILE ? 1.55 : 2.2),
+                flickerPhase: random(0, Math.PI * 2),
+                sparkLength: isHeavySpark
+                    ? random(IS_MOBILE ? 1.1 : 1.4, IS_MOBILE ? 1.7 : 2.3)
+                    : random(IS_MOBILE ? 0.7 : 0.9, IS_MOBILE ? 1.4 : 1.8),
+                heavy: isHeavySpark,
+                ignition: false
             });
         }
 
@@ -214,7 +314,21 @@ if (card && canvas) {
     }
 
     function drawRocketTrail(rocket) {
-        rocket.trail.push({ x: rocket.x, y: rocket.y });
+        // Trail jitter
+        const noiseX =
+            Math.sin(rocket.t * 0.55 + rocket.trailNoisePhase) *
+            rocket.trailJitter *
+            random(0.65, 1.2);
+
+        const noiseY =
+            Math.cos(rocket.t * 0.48 + rocket.trailNoisePhase) *
+            rocket.trailJitter *
+            random(0.25, 0.75);
+
+        rocket.trail.push({
+            x: rocket.x + noiseX + random(-rocket.trailJitter * 0.4, rocket.trailJitter * 0.4),
+            y: rocket.y + noiseY + random(-rocket.trailJitter * 0.25, rocket.trailJitter * 0.25)
+        });
 
         if (rocket.trail.length > TRAIL_LENGTH) {
             rocket.trail.shift();
@@ -245,6 +359,19 @@ if (card && canvas) {
             ctx.stroke();
         }
 
+        // Small flickering rocket flame behind the head.
+        ctx.beginPath();
+        ctx.arc(
+            rocket.x + random(-1.1, 1.1),
+            rocket.y + random(1.5, 3.5),
+            IS_MOBILE ? random(1.1, 1.7) : random(1.4, 2.3),
+            0,
+            Math.PI * 2
+        );
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = rocket.color;
+        ctx.fill();
+
         ctx.beginPath();
         ctx.arc(rocket.x, rocket.y, IS_MOBILE ? 1.7 : 2.2, 0, Math.PI * 2);
         ctx.globalAlpha = 0.9;
@@ -265,7 +392,7 @@ if (card && canvas) {
 
     function updateRockets() {
         rockets = rockets.filter((rocket) => {
-            rocket.t += 0.9 * deltaMultiplier;
+            rocket.t += 1.02 * deltaMultiplier;
 
             const tau = rocket.t;
             let x = rocket.startX + rocket.vx0 * tau;
@@ -405,12 +532,22 @@ if (card && canvas) {
     function updateParticles() {
         ctx.save();
         ctx.globalCompositeOperation = "lighter";
+        ctx.lineCap = "round";
 
         particles = particles.filter((p) => {
+            if (p.delay > 0) {
+                p.delay -= deltaMultiplier;
+                return true;
+            }
+
             const dragFactor = Math.pow(DRAG, deltaMultiplier);
 
+            p.prevX = p.x;
+            p.prevY = p.y;
+
+            p.vx += p.wind * deltaMultiplier;
             p.vx *= dragFactor;
-            p.vy = p.vy * dragFactor + GRAVITY_PARTICLE * deltaMultiplier;
+            p.vy = p.vy * dragFactor + p.gravity * deltaMultiplier;
 
             p.x += p.vx * deltaMultiplier;
             p.y += p.vy * deltaMultiplier;
@@ -419,24 +556,32 @@ if (card && canvas) {
             const twinkle = 0.65 + 0.35 * Math.sin(p.flickerPhase + p.life * 24);
             const alpha = Math.max(p.life, 0) * twinkle;
 
-            ctx.globalAlpha = alpha * 0.25;
+            // Spark line
+            ctx.globalAlpha = alpha * (p.heavy ? 0.9 : 0.75);
             ctx.shadowBlur = 0;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size * 3.2, 0, Math.PI * 2);
-            ctx.fillStyle = p.color;
-            ctx.fill();
+            ctx.strokeStyle = p.color;
+            ctx.lineWidth = Math.max(0.6, p.size * (p.heavy ? 0.65 : 0.55));
 
+            ctx.beginPath();
+            ctx.moveTo(p.prevX, p.prevY);
+            ctx.lineTo(
+                p.prevX + (p.x - p.prevX) * p.sparkLength,
+                p.prevY + (p.y - p.prevY) * p.sparkLength
+            );
+            ctx.stroke();
+
+            // small core point at the end
             ctx.globalAlpha = alpha;
 
             if (!IS_MOBILE) {
-                ctx.shadowBlur = 12;
+                ctx.shadowBlur = p.heavy ? 13 : 10;
                 ctx.shadowColor = p.color;
             } else {
                 ctx.shadowBlur = 0;
             }
 
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, p.size * (p.ignition ? 0.65 : 0.85), 0, Math.PI * 2);
             ctx.fillStyle = p.color;
             ctx.fill();
 
@@ -452,7 +597,7 @@ if (card && canvas) {
         lastFrameTime = now;
 
         // 16.67ms = 60 FPS baseline.
-        // Cap at 2 so big lag spikes don't teleport the animation too hard.
+        // Cap at 2 so big lag spikes do not teleport the animation too hard.
         deltaMultiplier = Math.min(deltaTime / 16.67, 2);
 
         ctx.clearRect(0, 0, card.offsetWidth, card.offsetHeight);
@@ -511,7 +656,7 @@ if (card && canvas) {
         card.addEventListener("mouseleave", stopCelebration);
     }
 
-    // Mobile: only real click/tap on the card, not touchstart while scrolling
+    // Mobile: only real click/tap on the card,
     if (IS_MOBILE) {
         card.addEventListener("click", () => {
             if (hoverActive) {
