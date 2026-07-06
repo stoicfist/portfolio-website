@@ -16,6 +16,9 @@ if (card && canvas) {
 
     let activeRocketCycles = 0;
 
+    let lastFrameTime = performance.now();
+    let deltaMultiplier = 1;
+
     const celebrationEndDate = new Date("2026-12-31");
 
     const IS_MOBILE =
@@ -67,7 +70,8 @@ if (card && canvas) {
     function ensureAnimating() {
         if (!animating) {
             animating = true;
-            animate();
+            lastFrameTime = performance.now();
+            requestAnimationFrame(animate);
         }
     }
 
@@ -261,7 +265,7 @@ if (card && canvas) {
 
     function updateRockets() {
         rockets = rockets.filter((rocket) => {
-            rocket.t += 0.9;
+            rocket.t += 0.9 * deltaMultiplier;
 
             const tau = rocket.t;
             let x = rocket.startX + rocket.vx0 * tau;
@@ -300,7 +304,7 @@ if (card && canvas) {
 
     function updateFlashes() {
         flashes = flashes.filter((flash) => {
-            flash.life -= IS_MOBILE ? 0.08 : 0.045;
+            flash.life -= (IS_MOBILE ? 0.08 : 0.045) * deltaMultiplier;
             return flash.life > 0;
         });
     }
@@ -328,16 +332,16 @@ if (card && canvas) {
         }
 
         smoke = smoke.filter((s) => {
-            s.vx += random(-0.01, 0.01);
-            s.vy += random(-0.008, 0.008);
+            s.vx += random(-0.01, 0.01) * deltaMultiplier;
+            s.vy += random(-0.008, 0.008) * deltaMultiplier;
 
-            s.vx *= 0.985;
-            s.vy *= 0.985;
+            s.vx *= Math.pow(0.985, deltaMultiplier);
+            s.vy *= Math.pow(0.985, deltaMultiplier);
 
-            s.x += s.vx;
-            s.y += s.vy;
-            s.size += s.growth * s.life;
-            s.life -= SMOKE_DECAY;
+            s.x += s.vx * deltaMultiplier;
+            s.y += s.vy * deltaMultiplier;
+            s.size += s.growth * s.life * deltaMultiplier;
+            s.life -= SMOKE_DECAY * deltaMultiplier;
 
             if (s.life <= 0) return false;
 
@@ -403,12 +407,14 @@ if (card && canvas) {
         ctx.globalCompositeOperation = "lighter";
 
         particles = particles.filter((p) => {
-            p.vx *= DRAG;
-            p.vy = p.vy * DRAG + GRAVITY_PARTICLE;
+            const dragFactor = Math.pow(DRAG, deltaMultiplier);
 
-            p.x += p.vx;
-            p.y += p.vy;
-            p.life -= p.decay;
+            p.vx *= dragFactor;
+            p.vy = p.vy * dragFactor + GRAVITY_PARTICLE * deltaMultiplier;
+
+            p.x += p.vx * deltaMultiplier;
+            p.y += p.vy * deltaMultiplier;
+            p.life -= p.decay * deltaMultiplier;
 
             const twinkle = 0.65 + 0.35 * Math.sin(p.flickerPhase + p.life * 24);
             const alpha = Math.max(p.life, 0) * twinkle;
@@ -441,7 +447,14 @@ if (card && canvas) {
         ctx.restore();
     }
 
-    function animate() {
+    function animate(now = performance.now()) {
+        const deltaTime = now - lastFrameTime;
+        lastFrameTime = now;
+
+        // 16.67ms = 60 FPS baseline.
+        // Cap at 2 so big lag spikes don't teleport the animation too hard.
+        deltaMultiplier = Math.min(deltaTime / 16.67, 2);
+
         ctx.clearRect(0, 0, card.offsetWidth, card.offsetHeight);
 
         updateRockets();
@@ -454,6 +467,7 @@ if (card && canvas) {
             requestAnimationFrame(animate);
         } else {
             animating = false;
+            lastFrameTime = performance.now();
         }
     }
 
@@ -491,26 +505,20 @@ if (card && canvas) {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    card.addEventListener("mouseenter", startCelebration);
-    card.addEventListener("mouseleave", stopCelebration);
+    // Desktop: hover only
+    if (!IS_MOBILE) {
+        card.addEventListener("mouseenter", startCelebration);
+        card.addEventListener("mouseleave", stopCelebration);
+    }
 
-    card.addEventListener("click", () => {
-        if (IS_MOBILE) {
+    // Mobile: only real click/tap on the card, not touchstart while scrolling
+    if (IS_MOBILE) {
+        card.addEventListener("click", () => {
             if (hoverActive) {
                 stopCelebration();
             } else {
                 startCelebration();
             }
-        }
-    });
-
-    card.addEventListener(
-        "touchstart",
-        () => {
-            if (IS_MOBILE && !hoverActive) {
-                startCelebration();
-            }
-        },
-        { passive: true }
-    );
+        });
+    }
 }
