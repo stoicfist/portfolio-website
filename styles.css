@@ -160,6 +160,135 @@ p {
   color: #fff;
 }
 
+.competition-content {
+    position: relative;
+    z-index: 2;
+}
+
+.competition-details {
+    margin-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.competition-details summary {
+    padding-top: 18px;
+    color: #d6d6d6;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+.competition-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.competition-details summary::after {
+    content: "＋";
+    float: right;
+    color: #d4af00;
+    font-size: 18px;
+    line-height: 14px;
+    transition: transform 0.2s ease;
+}
+
+.competition-details[open] summary::after {
+    content: "−";
+}
+
+.competition-details-content {
+    padding-top: 18px;
+    animation: competition-details-open 0.25s ease;
+}
+
+.competition-details-content p {
+    margin-top: 0;
+    color: #bdbdbd;
+    line-height: 1.7;
+}
+
+.competition-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.competition-facts div {
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.competition-facts span {
+    display: block;
+    margin-bottom: 6px;
+    color: #8d8d8d;
+    font-size: 12px;
+}
+
+.competition-facts strong {
+    color: #eeeeee;
+    font-size: 13px;
+}
+
+.competition-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 18px;
+    color: #c9c9c9;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s ease,
+                transform 0.2s ease;
+}
+
+.competition-link:hover {
+    color: #ffd700;
+
+}
+
+.competition-facts div {
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.025);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.competition-facts div:hover {
+    border-color: rgba(255, 215, 0, 0.2);
+    background: rgba(255, 215, 0, 0.025);
+}
+
+@keyframes competition-details-open {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 700px) {
+    .competition-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 430px) {
+    .competition-facts {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ================= PROJECTS ================= */
 
 .projects {
