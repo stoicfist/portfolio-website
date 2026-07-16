@@ -37,6 +37,12 @@ if (card && canvas) {
     const SMOKE_DECAY = IS_MOBILE ? 0.01 : 0.0018;
     const MAX_SMOKE = IS_MOBILE ? 0 : 35;
 
+    const ROCKET_DRAG = IS_MOBILE ? 0.993 : 0.989;
+    const ROCKET_THUST_FRAMES_MIN = IS_MOBILE ? 8 : 10;
+    const ROCKET_THUST_FRAMES_MAX = IS_MOBILE ? 13 : 17;
+    const ROCKET_THRUST_POWER_MIN = IS_MOBILE ? 0.045 : 0.055;
+    const ROCKET_THRUST_POWER_MAX = IS_MOBILE ? 0.075 : 0.095;
+
     const ROCKET_INTERVAL_MIN = IS_MOBILE ? 1600 : 1000;
     const ROCKET_INTERVAL_MAX = IS_MOBILE ? 2300 : 1600;
 
@@ -91,60 +97,42 @@ if (card && canvas) {
     function createRocket() {
         activeRocketCycles++;
 
-        const startX = random(50, card.offsetWidth - 50);
-        const startY = card.offsetHeight + 12;
+        const startX = random(50, canvas.clientWidth - 50);
+        const startY = canvas.clientHeight + 12;
 
-        const type = Math.floor(random(0, 4));
-        let targetX = startX;
-        const targetY = random(card.offsetHeight * 0.15, card.offsetHeight * 0.5);
-
-        switch (type) {
-            case 0:
-                targetX = startX + random(-15, 15);
-                break;
-
-            case 1:
-                targetX = random(card.offsetWidth * 0.2, card.offsetWidth * 0.85);
-                break;
-
-            case 2:
-                targetX = startX;
-                break;
-
-            case 3:
-                targetX = startX + random(-card.offsetWidth * 0.25, card.offsetWidth * 0.25);
-                break;
-
-            default:
-                targetX = startX + random(-card.offsetWidth * 0.3, card.offsetWidth * 0.3);
-                break;
-        }
-
-        targetX = Math.max(30, Math.min(card.offsetWidth - 30, targetX));
+        const targetY = random(canvas.clientHeight * 0.15, canvas.clientHeight * 0.5);
+        const targetX = Math.max(
+            30,
+            Math.min(
+                canvas.clientWidth - 30,
+                startX + random(-canvas.clientWidth * 0.22, canvas.clientWidth * 0.22)
+            )
+        );
 
         const dy = startY - targetY;
-        const vy0 = -Math.sqrt(2 * GRAVITY_ROCKET * dy);
-        const timeToApex = -vy0 / GRAVITY_ROCKET;
-        const vx0 = (targetX - startX) / timeToApex;
+        const vy0 = -Math.sqrt(2 * GRAVITY_ROCKET * dy) * random(1.02, 1.12);
+        const launchLean = random(5, IS_MOBILE ? 11 : 16) * (targetX >= startX ? 1 : -1);
+        const vx0 = Math.tan((launchLean * Math.PI) / 180) * Math.abs(vy0);
 
         rockets.push({
             x: startX,
             y: startY,
             startX,
             startY,
+            vx: vx0,
+            vy: vy0,
             vx0,
             vy0,
-            t: 0,
-            timeToApex,
-            type,
+            age: 0,
+            thrustTime: random(ROCKET_THUST_FRAMES_MIN, ROCKET_THUST_FRAMES_MAX),
+            thrustPower: random(ROCKET_THRUST_POWER_MIN, ROCKET_THRUST_POWER_MAX),
+            maxLife: random(IS_MOBILE ? 100 : 120, IS_MOBILE ? 150 : 180),
             color: randomColor(),
-            spiralAmp: random(10, 18),
-            spiralFreq: random(0.16, 0.23),
             trail: [],
             slotReleased: false,
 
             // Tail jitter, rocket with small unstable flame movement
-            trailJitter: random(IS_MOBILE ? 0.35 : 0.65, IS_MOBILE ? 0.75 : 1.25),
+            trailJitter: random(IS_MOBILE ? 0.12 : 0.18, IS_MOBILE ? 0.25 : 0.34),
             trailNoisePhase: random(0, Math.PI * 2)
         });
 
@@ -233,9 +221,6 @@ if (card && canvas) {
         // Burst types: 0 = normal, 1 = bouquet, 2 = chrysanthemum.
         const burstType = Math.floor(random(0, 3));
 
-        // Wind: very small horizontal drift for natural movement.
-        const burstWind = random(-0.012, 0.012);
-
         for (let i = 0; i < count; i++) {
             const angle = random(0, Math.PI * 2);
 
@@ -287,7 +272,7 @@ if (card && canvas) {
                     IS_MOBILE ? 0.038 : burstType === 1 ? 0.046 : 0.038,
                     IS_MOBILE ? 0.058 : burstType === 1 ? 0.078 : 0.068
                 ),
-                wind: burstWind * random(0.6, 1.4),
+                wind: 0,
                 color,
                 size: isHeavySpark
                     ? random(IS_MOBILE ? 1.35 : 1.6, IS_MOBILE ? 1.9 : 2.6)
@@ -314,20 +299,9 @@ if (card && canvas) {
     }
 
     function drawRocketTrail(rocket) {
-        // Trail jitter
-        const noiseX =
-            Math.sin(rocket.t * 0.55 + rocket.trailNoisePhase) *
-            rocket.trailJitter *
-            random(0.65, 1.2);
-
-        const noiseY =
-            Math.cos(rocket.t * 0.48 + rocket.trailNoisePhase) *
-            rocket.trailJitter *
-            random(0.25, 0.75);
-
         rocket.trail.push({
-            x: rocket.x + noiseX + random(-rocket.trailJitter * 0.4, rocket.trailJitter * 0.4),
-            y: rocket.y + noiseY + random(-rocket.trailJitter * 0.25, rocket.trailJitter * 0.25)
+            x: rocket.x,
+            y: rocket.y
         });
 
         if (rocket.trail.length > TRAIL_LENGTH) {
@@ -392,26 +366,29 @@ if (card && canvas) {
 
     function updateRockets() {
         rockets = rockets.filter((rocket) => {
-            rocket.t += 1.02 * deltaMultiplier;
+            rocket.age += deltaMultiplier;
 
-            const tau = rocket.t;
-            let x = rocket.startX + rocket.vx0 * tau;
+            const dragFactor = Math.pow(ROCKET_DRAG, deltaMultiplier);
 
-            if (rocket.type === 2) {
-                x += Math.sin(tau * rocket.spiralFreq) * rocket.spiralAmp;
+            if (rocket.thrustTime > 0) {
+                rocket.thrustTime -= deltaMultiplier;
+                rocket.vy -= rocket.thrustPower * deltaMultiplier;
             }
 
-            const y =
-                rocket.startY +
-                rocket.vy0 * tau +
-                0.5 * GRAVITY_ROCKET * tau * tau;
+            rocket.vx *= dragFactor;
+            rocket.vy = rocket.vy * dragFactor + GRAVITY_ROCKET * deltaMultiplier;
 
-            rocket.x = x;
-            rocket.y = y;
+            rocket.x += rocket.vx * deltaMultiplier;
+            rocket.y += rocket.vy * deltaMultiplier;
+
+            if (rocket.t == null) {
+                rocket.t = 0;
+            }
+            rocket.t += deltaMultiplier;
 
             drawRocketTrail(rocket);
 
-            if (rocket.t >= rocket.timeToApex) {
+            if ((rocket.thrustTime <= 0 && rocket.vy >= 0) || rocket.age >= rocket.maxLife) {
                 explode(rocket.x, rocket.y, rocket.color);
 
                 if (!rocket.slotReleased) {
@@ -545,7 +522,6 @@ if (card && canvas) {
             p.prevX = p.x;
             p.prevY = p.y;
 
-            p.vx += p.wind * deltaMultiplier;
             p.vx *= dragFactor;
             p.vy = p.vy * dragFactor + p.gravity * deltaMultiplier;
 
@@ -649,6 +625,12 @@ if (card && canvas) {
 
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
+
+    const cardResizeObserver = new ResizeObserver(() => {
+        resizeCanvas();
+    });
+
+    cardResizeObserver.observe(card);
 
     // Desktop: hover only
     if (!IS_MOBILE) {
