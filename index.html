@@ -27,6 +27,8 @@
 
     <!-- STYLES -->
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
     <!-- FIREWORK -->
     <script src="js/fireworks.js" defer></script>
@@ -66,9 +68,9 @@
 
         <!-- COMPETITIONS -->
         <section class="competitions">
-            <h2>Competitions</h2>
+            <h2>Hackathons & Competitions</h2>
 
-            <div class="competition-card" id="competition-card">
+            <article class="competition-card" id="competition-card">
                 <canvas id="competition-fireworks"></canvas>
 
                 <h3>BFH-AppRun 2026FS</h3>
@@ -127,7 +129,72 @@
                         Visit the official competition page ↗
                     </a>
                 </details>
-            </div>
+            </article>
+
+
+            <article class="competition-card" id="competition-card">
+                <div class="competition-header">
+                    <span class="competition-type">Hackathon · 2026 </span>
+                    <span class="competition-badge"> Participant </span>
+                </div>
+
+                <h3>Energy Data Hackdays</h3>
+
+
+                <p class="competition-subtitle">
+                    Secure Power Quality Metering via SCION
+                </p>
+
+                <p class="competition-description">
+                    Developed a Rust-based prototype for power quality monitoring, collecting real-time measurements from Janitza UMG 605-Pro 
+                    via Modbus TCP and transmitting them through a simulated SCION network using PocketSCION.
+                    Contributed to anomaly detection and monitoring of electrical measurements.
+                </p>
+
+                <div class="competition-meta">
+                    <span>Rust</span>
+                    <span>SCION</span>
+                    <span>Modbus TCP</span>
+                    <span>Raspberry Pi 5</span>
+                    <span>Network Programming</span>
+                    <span>Anomaly Detection</span>
+                </div>
+
+                <div class="competition-team">
+
+                    <p>
+                        <span>Team:</span>
+                        <a href="https://github.com/Krazzuz"
+                            target="_blank" rel="noopener noreferrer">
+                            Chris Jacomet
+                        </a>,
+                        <a href="https://github.com/jones-joestar"
+                            target="_blank" rel="noopener noreferrer">
+                            Jonas Flückiger
+                        </a>,
+                        <a href="https://github.com/Noah-Klaholz"
+                            target="_blank" rel="noopener noreferrer">
+                            Noah Klarholz
+                        </a>,
+                        <a href="https://github.com/noahvogt"
+                            target="_blank" rel="noopener noreferrer">
+                            Noah Vogt
+                        </a>,
+                        <a href="https://github.com/stoicfist"
+                            target="_blank" rel="noopener noreferrer">
+                            Peter Ngo
+                        </a>
+                    </p>
+
+                    <a href="https://github.com/Noah-Klaholz/secure-pq-meter-template"
+                        class="competition-link" target="_blank" rel="noopener noreferrer">
+                        <i class="bi bi-github" aria-hidden="true"></i>
+                        GitHub Repository
+                        <span aria-hidden="true">↗</span>
+                    </a>
+                </article>
+
+
         </section>
 
         <!-- PROJECTS -->
@@ -209,7 +276,7 @@
         <section class="about">
             <h2>About</h2>
             <p>
-                I’m a 3rd-year apprentice software developer at
+                I’m a 4rd-year apprentice software developer at
                 <a href="https://www.semafor.ch" target="_blank">Semafor Informatik & Energie AG</a>,
                 focusing on cloud architectures and scalable systems.
                 Alongside my work, I develop independent research exploring computational models of experience.

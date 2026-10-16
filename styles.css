@@ -262,6 +262,15 @@ p {
     background: rgba(255, 215, 0, 0.025);
 }
 
+.competition-subtitle {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: #aeb8c2;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
 @keyframes competition-details-open {
     from {
         opacity: 0;
