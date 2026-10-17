@@ -160,39 +160,88 @@
                     <span>Anomaly Detection</span>
                 </div>
 
-                <div class="competition-team">
+                <a href="https://github.com/Noah-Klaholz/secure-pq-meter-template"
+                    class="competition-link" target="_blank" rel="noopener noreferrer">
+                    <i class="bi bi-github" aria-hidden="true"></i>
+                    GitHub Repository
+                    <span aria-hidden="true">↗</span>
+                </a>
 
-                    <p>
-                        <span>Team:</span>
-                        <a href="https://github.com/Krazzuz"
-                            target="_blank" rel="noopener noreferrer">
-                            Chris Jacomet
-                        </a>,
-                        <a href="https://github.com/jones-joestar"
-                            target="_blank" rel="noopener noreferrer">
-                            Jonas Flückiger
-                        </a>,
-                        <a href="https://github.com/Noah-Klaholz"
-                            target="_blank" rel="noopener noreferrer">
-                            Noah Klarholz
-                        </a>,
-                        <a href="https://github.com/noahvogt"
-                            target="_blank" rel="noopener noreferrer">
-                            Noah Vogt
-                        </a>,
-                        <a href="https://github.com/stoicfist"
-                            target="_blank" rel="noopener noreferrer">
-                            Peter Ngo
-                        </a>
-                    </p>
+               <details class="competition-details">
+                    <summary>More about the competition</summary>
 
-                    <a href="https://github.com/Noah-Klaholz/secure-pq-meter-template"
-                        class="competition-link" target="_blank" rel="noopener noreferrer">
-                        <i class="bi bi-github" aria-hidden="true"></i>
-                        GitHub Repository
-                        <span aria-hidden="true">↗</span>
-                    </a>
-                </article>
+                <div class="competition-details-content">
+
+                    <section class="architecture-section">
+                        <h4>System Architecture</h4>
+
+                        <pre class="architecture-diagram">
+  ┌────────────────────┐
+  │ Janitza UMG605-PRO │
+  │ Power Quality Meter│
+  └─────────┬──────────┘
+            │ Modbus TCP
+            ▼
+┌──────────────────────────┐       ┌────────────────────────────────────┐
+│ Raspberry Pi 5 (Gateway) │       │ Laptop (Receiver)                  │
+│                          │       │                                    │
+│ pq-meter-client          │       │ pq-meter-server                    │
+│                          │ WLAN  │ ┌────────────────────────────────┐ │
+│ SCION stack ─────────────┼──────►│ │ PocketSCION                    │ │
+│ HTTP/3 POST              │       │ │ 1-ff00:0:132 → 2-ff00:0:212    │ │
+│                          │       │ └────────────────────────────────┘ │
+│                          │       │ HTTP/3 server + Dashboard          │
+└──────────────────────────┘       └────────────────────────────────────┘
+                        </pre>
+                    </section>
+
+                    <section class="team-section">
+                        <h4>The Team</h4>
+
+                        <p>
+                            Our team brought together three students from the University of Basel,
+                            one student from FHNW, and one software development apprentice from Semafor.
+                            We had a great time tackling this challenge together, learning from each other,
+                            and having plenty of fun along the way.
+                        </p>
+
+                        <img
+                        src="image/energy-hackdays-team.jpg"
+                        alt="Energy Data Hackdays 2026 team"
+                        class="competition-team-photo"
+                        loading="lazy"
+                        >
+
+                        <div class="competition-team">
+
+                            <p>
+                                <span>Team:</span>
+                                <a href="https://github.com/Krazzuz"
+                                    target="_blank" rel="noopener noreferrer">
+                                    Chris Jacomet (UniBasel)
+                                </a>,
+                                <a href="https://github.com/jones-joestar"
+                                    target="_blank" rel="noopener noreferrer">
+                                    Jonas Flückiger (UniBasel)
+                                </a>,
+                                <a href="https://github.com/Noah-Klaholz"
+                                    target="_blank" rel="noopener noreferrer">
+                                    Noah Klarholz (UniBasel)
+                                </a>,
+                                <a href="https://github.com/noahvogt"
+                                    target="_blank" rel="noopener noreferrer">
+                                    Noah Vogt (FHNW)
+                                </a>,
+                                <a href="https://github.com/stoicfist"
+                                    target="_blank" rel="noopener noreferrer">
+                                    Peter Ngo (Semafor)
+                                </a>
+                            </p>
+                        </div>
+                    </section>
+
+                </details>
+            </article>
 
 
         </section>
